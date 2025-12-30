@@ -73,7 +73,7 @@ CREATE TABLE categories (
     FOREIGN KEY (id_match) REFERENCES matchs(id_match)
 );
 
---create Tanle procédure stockée
+--create Tanle View
 CREATE VIEW Matchs_valides AS
 SELECT 
     id_match,
