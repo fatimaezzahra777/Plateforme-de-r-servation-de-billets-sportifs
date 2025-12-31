@@ -73,7 +73,8 @@ CREATE TABLE categories (
     FOREIGN KEY (id_match) REFERENCES matchs(id_match)
 );
 
---create view
+
+--create View
 CREATE VIEW Matchs_valides AS
 SELECT 
     id_match,
