@@ -1,0 +1,25 @@
+{
+  "name": "gestion_matches",
+  "version": "1.0.0",
+  "description": "## Description du projet Cette plateforme web permet la **gestion et la vente de billets pour des événements sportifs**.   Elle offre une interface adaptée à chaque type d’utilisateur : visiteurs, acheteurs de billets, organisateurs d’événements et administrateurs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fatimaezzahra777/Plateforme-de-r-servation-de-billets-sportifs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fatimaezzahra777/Plateforme-de-r-servation-de-billets-sportifs/issues"
+  },
+  "homepage": "https://github.com/fatimaezzahra777/Plateforme-de-r-servation-de-billets-sportifs#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}

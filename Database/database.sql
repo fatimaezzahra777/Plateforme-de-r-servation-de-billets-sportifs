@@ -50,6 +50,18 @@ CREATE TABLE matchs (
     FOREIGN KEY (id_organisateur) REFERENCES users(id_user)
 );
 
+--create table Ticket
+CREATE TABLE Ticket (
+    id_ticket INT AUTO_INCREMENT PRIMARY KEY,
+    id_user INT NOT NULL,
+    id_match INT NOT NULL,
+    id_categorie INT NOT NULL,
+    place VARCHAR(20),
+    date_achat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES users(id_user),
+    FOREIGN KEY (id_match) REFERENCES matchs(id_match),
+    FOREIGN KEY (id_categorie) REFERENCES categories(id_categorie)
+);
 
 --create table Commentaires
 CREATE TABLE Commentaires (
@@ -72,7 +84,6 @@ CREATE TABLE categories (
     nb_places INT,
     FOREIGN KEY (id_match) REFERENCES matchs(id_match)
 );
-
 
 --create View
 CREATE VIEW Matchs_valides AS
