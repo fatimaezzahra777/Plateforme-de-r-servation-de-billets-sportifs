@@ -26,7 +26,7 @@ $noteMoyenne = round($stmt->fetchColumn(), 1) ?? 0;
 $pdo = Database::getConnection();
 $idOrganisateur = $_SESSION['id_user'];
 
-// Récupérer tous les matchs de cet organisateur
+
 $stmt = $pdo->prepare("
     SELECT * 
     FROM matchs

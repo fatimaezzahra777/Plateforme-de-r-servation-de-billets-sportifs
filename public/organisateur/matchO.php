@@ -42,6 +42,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_POST['nb_places']
     ]);
 
+    $id_match = $pdo->lastInsertId();
+
+    $categorie = $_POST['categorie'];
+    $prix = $_POST['prix'];
+
+    $stmt_cat = $pdo->prepare("
+        INSERT INTO categories (id_match, nom_categorie, prix, nb_places)
+        VALUES (?, ?, ?, ?)
+    ");
+
+    $stmt_cat->execute([
+        $id_match,
+        $categorie,
+        $prix,
+        $_POST['nb_places']  
+    ]);
+
     header("Location: organisateur.php?success=1");
     exit;
 }

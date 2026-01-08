@@ -11,26 +11,25 @@ $pdo = Database::getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if (isset($_POST['approve_match'])) {
-        $idMatch = (int) $_POST['approve_match'];
+    if (isset($_POST['id_match'], $_POST['statut'])) {
 
-        $stmt = $pdo->prepare("UPDATE matchs SET statut = 'actif' WHERE id_match = ?");
-        $stmt->execute([$idMatch]);
+        $idMatch = (int) $_POST['id_match'];
+        $statut = $_POST['statut'];
 
-        header("Location: admin_dashboard.php");
-        exit;
-    }
+        if (!in_array($statut, ['valide', 'refuse'])) {
+            die('Statut invalide');
+        }
 
-    if (isset($_POST['reject_match'])) {
-        $idMatch = (int) $_POST['reject_match'];
-
-        $stmt = $pdo->prepare("UPDATE matchs SET statut = 'refuse' WHERE id_match = ?");
-        $stmt->execute([$idMatch]);
+        $stmt = $pdo->prepare(
+            "UPDATE matchs SET statut = ? WHERE id_match = ?"
+        );
+        $stmt->execute([$statut, $idMatch]);
 
         header("Location: admin_dashboard.php");
         exit;
     }
 }
+
 
 if (isset($_GET['toggle_user'])) {
     $idUser = (int) $_GET['toggle_user'];
@@ -76,6 +75,10 @@ $pendingMatches = $pdo->query("
     JOIN users u ON m.id_organisateur = u.id_user
     ORDER BY m.date_match ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT * FROM matchs ORDER BY date_match DESC");
+$stmt->execute();
+$matchs = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -601,6 +604,14 @@ $pendingMatches = $pdo->query("
                 overflow-x: scroll;
             }
         }
+
+        .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;}
+.topbar .user{display:flex;align-items:center;gap:0.5rem;}
+.topbar .user i{font-size:1.5rem;color:#6366f1;}
+.match{background:#1e293b;padding:1.5rem;margin-bottom:2rem;border-radius:12px;}
+.match h2{margin-bottom:1rem;}
+.commentaire{background:#111827;padding:1rem;margin-bottom:1rem;border-radius:8px;border:1px solid #444;}
+.commentaire strong{color:#6366f1;}
     </style>
 </head><body>
 
@@ -703,17 +714,31 @@ $pendingMatches = $pdo->query("
                         <td><?= (int)$match['nb_places'] ?></td>
 
                         <td>
-                            <span class="badge badge-warning">
-                                <i class="fas fa-clock"></i> En attente
-                            </span>
+                            <?php if ($match['statut'] === 'en_attente'): ?>
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-clock"></i> En attente
+                                </span>
+
+                            <?php elseif ($match['statut'] === 'valide'): ?>
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> Validé
+                                </span>
+
+                            <?php elseif ($match['statut'] === 'refuse'): ?>
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-times-circle"></i> Refusé
+                                </span>
+                            <?php endif; ?>
                         </td>
+
 
                         <td>
                             <div class="action-buttons">
 
                                 <!-- APPROUVER -->
                                 <form method="post">
-                                    <input type="hidden" name="approve_match" value="<?= $match['id_match'] ?>">
+                                    <input type="hidden" name="id_match" value="<?= $match['id_match'] ?>">
+                                    <input type="hidden" name="statut" value="valide">
                                     <button class="action-btn approve" title="Approuver">
                                         <i class="fas fa-check"></i>
                                     </button>
@@ -721,13 +746,15 @@ $pendingMatches = $pdo->query("
 
                                 <!-- REFUSER -->
                                 <form method="post">
-                                    <input type="hidden" name="reject_match" value="<?= $match['id_match'] ?>">
+                                    <input type="hidden" name="id_match" value="<?= $match['id_match'] ?>">
+                                    <input type="hidden" name="statut" value="refuse">
                                     <button class="action-btn reject" title="Refuser">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </form>
 
                             </div>
+
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -736,7 +763,6 @@ $pendingMatches = $pdo->query("
         </div>
     </div>
 
-    <!-- ===== UTILISATEURS RÉCENTS ===== -->
     <div class="content-section">
 
         <div class="section-header">
@@ -761,11 +787,15 @@ $pendingMatches = $pdo->query("
                         <td><?= htmlspecialchars($user['nom']) ?></td>
                         <td><?= htmlspecialchars($user['email']) ?></td>
 
-                        <td>
-                            <span class="badge <?= $user['role']=='acheteur' ? 'badge-info' : 'badge-warning' ?>">
-                                <?= ucfirst($user['role']) ?>
-                            </span>
+                       <td>
+                            <?php if ($user['role'] === 'acheteur'): ?>
+                                <span class="badge badge-info">Acheteur</span>
+
+                            <?php elseif ($user['role'] === 'organisateur'): ?>
+                                <span class="badge badge-warning">Organisateur</span>
+                            <?php endif; ?>
                         </td>
+
 
                         <td>
                             <span class="badge <?= $user['statut']=='actif' ? 'badge-success' : 'badge-danger' ?>">
@@ -782,7 +812,48 @@ $pendingMatches = $pdo->query("
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         </div>
+
+        <div>
+           <h1>Tous les commentaires</h1>
+
+            <?php if(!$matchs): ?>
+                <p>Aucun match enregistré.</p>
+            <?php else: ?>
+                <?php foreach($matchs as $match): ?>
+                    <div class="match">
+                        <h2><?= htmlspecialchars($match['equipe1']) ?> vs <?= htmlspecialchars($match['equipe2']) ?> - <?= date("d/m/Y", strtotime($match['date_match'])) ?></h2>
+
+                        <?php
+                        // Récupérer les commentaires pour ce match
+                        $stmt = $pdo->prepare("
+                            SELECT c.commentaire, c.note, c.date_commentaire, u.nom 
+                            FROM Commentaires c
+                            JOIN users u ON u.id_user = c.id_user
+                            WHERE c.id_match = ?
+                            ORDER BY c.date_commentaire DESC
+                        ");
+                        $stmt->execute([$match['id_match']]);
+                        $comments = $stmt->fetchAll();
+                        ?>
+
+                        <?php if($comments): ?>
+                            <?php foreach($comments as $c): ?>
+                                <div class="commentaire">
+                                    <strong><?= htmlspecialchars($c['nom']) ?></strong> - <?= $c['note'] ?> étoiles<br>
+                                    <small><?= date("d/m/Y H:i", strtotime($c['date_commentaire'])) ?></small>
+                                    <p><?= nl2br(htmlspecialchars($c['commentaire'])) ?></p>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p>Aucun commentaire pour ce match.</p>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
     </div>
 
 </div>
