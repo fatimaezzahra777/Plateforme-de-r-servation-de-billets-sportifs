@@ -2,25 +2,115 @@
 session_start();
 require_once '../../config/Database.php';
 
+if (!isset($_SESSION['id_user']) || $_SESSION['role'] !== 'acheteur') {
+    header("Location: ../login.php");
+    exit;
+}
+
+$id_user = $_SESSION['id_user'];
+$db = Database::getConnection();
+
+if (isset($_POST['acheter'])) {
+    $id_match = intval($_POST['id_match']);
+
+    $check = $db->prepare(
+        "SELECT COUNT(*) FROM Ticket WHERE id_user=? AND id_match=?"
+    );
+    $check->execute([$id_user, $id_match]);
+
+    if ($check->fetchColumn() >= 4) {
+        $error = "Maximum 4 billets par match";
+    } else {
+
+        $cat = $db->prepare(
+            "SELECT * FROM categories 
+             WHERE id_match=? AND nb_places>0 LIMIT 1"
+        );
+        $cat->execute([$id_match]);
+        $categorie = $cat->fetch();
+
+        if ($categorie) {
+
+            $insert = $db->prepare(
+                "INSERT INTO Ticket (id_user, id_match, id_categorie, place)
+                 VALUES (?, ?, ?, ?)"
+            );
+            $insert->execute([
+                $id_user,
+                $id_match,
+                $categorie['id_categorie'],
+                'A'.rand(1,300)
+            ]);
+
+            $db->prepare(
+                "UPDATE categories SET nb_places = nb_places - 1
+                 WHERE id_categorie=?"
+            )->execute([$categorie['id_categorie']]);
+
+            $success = "Billet acheté avec succès";
+        }
+    }
+}
 
 
-$sql = "
-SELECT 
-    m.id_match,
-    m.equipe1,
-    m.equipe2,
-    m.date_match,
-    m.lieu,
-    SUM(c.nb_places) AS places_dispo
-FROM matchs m
-JOIN categories c ON m.id_match = c.id_match
-WHERE m.statut = 'valide'
-GROUP BY m.id_match
-";
+if (isset($_POST['commenter'])) {
+    $stmt = $db->prepare(
+        "INSERT INTO Commentaires (id_match,id_user,commentaire,note)
+         VALUES (?,?,?,?)"
+    );
+    $stmt->execute([
+        $_POST['id_match'],
+        $id_user,
+        $_POST['commentaire'],
+        $_POST['note']
+    ]);
+}
 
-$matchs = $pdo->query($sql)->fetchAll();
 
+$nbBillets = $db->query(
+    "SELECT COUNT(*) FROM Ticket WHERE id_user=$id_user"
+)->fetchColumn();
+
+$matchsAVenir = $db->query(
+    "SELECT COUNT(DISTINCT m.id_match)
+     FROM Ticket t
+     JOIN matchs m ON t.id_match=m.id_match
+     WHERE t.id_user=$id_user
+     AND m.date_match >= CURDATE()"
+)->fetchColumn();
+
+$matchs = $db->query(
+    "SELECT m.id_match, m.equipe1, m.equipe2,
+            m.date_match, m.lieu,
+            SUM(c.nb_places) AS nb_places
+     FROM matchs m
+     JOIN categories c ON m.id_match=c.id_match
+     WHERE m.statut='valide'
+     GROUP BY m.id_match"
+)->fetchAll();
+
+$stmt = $db->prepare(
+    "SELECT m.equipe1, m.equipe2, m.date_match,
+            c.nom_categorie, t.place
+     FROM Ticket t
+     JOIN matchs m ON t.id_match=m.id_match
+     JOIN categories c ON t.id_categorie=c.id_categorie
+     WHERE t.id_user=?"
+);
+$stmt->execute([$id_user]);
+$billets = $stmt->fetchAll();
+
+$stmt = $db->prepare(
+    "SELECT DISTINCT m.id_match, m.equipe1, m.equipe2
+     FROM Ticket t
+     JOIN matchs m ON t.id_match=m.id_match
+     WHERE t.id_user=?
+     AND m.date_match < CURDATE()"
+);
+$stmt->execute([$id_user]);
+$matchsAvis = $stmt->fetchAll();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -93,21 +183,72 @@ $matchs = $pdo->query($sql)->fetchAll();
         padding:25px;
         border-radius:15px;
     }
-    .stat-card i { font-size:2rem; margin-bottom:0.5rem; color:#6366f1; }
-    .stat-card h3 { font-size:1.25rem; margin-bottom:0.25rem; }
-    .stat-card p { color:#666; font-size:0.9rem; }
+    .stat-card i { 
+        font-size:2rem; 
+        margin-bottom:0.5rem; 
+        color:#6366f1; 
+    }
+    .stat-card h3 { 
+        font-size:1.25rem; 
+        margin-bottom:0.25rem; 
+    }
+    .stat-card p { 
+        color:#666; 
+        font-size:0.9rem; 
+    }
  
-    table { width:100%; border-collapse:collapse; background:#1e293b;  border-radius:12px; overflow:hidden; margin-top:2%; margin-bottom:2%; box-shadow: #1e293b; }
-    th, td { padding:1rem; text-align:left; border-bottom:1px solid #eee; }
-    th { background:#1e293b; color:white; }
-    tr:hover { background:#1e298b; }
-    .btn { padding:0.5rem 1rem; border:none; border-radius:8px; cursor:pointer; }
-    .btn-primary { background:#6366f1; color:#fff; }
-    .btn-outline { background:#6366f1; color:#fff; border:1px solid #6366f1; }
-    .btn-primary:hover { opacity:0.9; }
-    .btn-outline:hover { background:#6366f1; color:#fff; }
+    table { 
+        width:100%; 
+        border-collapse:collapse; 
+        background:#1e293b;  
+        border-radius:12px; 
+        overflow:hidden; 
+        margin-top:2%; 
+        margin-bottom:2%; 
+        box-shadow: #1e293b; 
+    }
+    th, td { 
+        padding:1rem; 
+        text-align:left; 
+        border-bottom:1px solid #eee; 
+    }
+    th { 
+        background:#1e293b; 
+        color:white; 
+    }
+    tr:hover { 
+        background:#1e298b; 
+    }
+    .btn { 
+        padding:0.5rem 1rem; 
+        border:none; 
+        border-radius:8px; 
+        cursor:pointer; 
+    }
+    .btn-primary { 
+        background:#6366f1; 
+        color:#fff; }
+    .btn-outline { 
+        background:#6366f1; 
+        color:#fff; 
+        border:1px solid #6366f1; 
+    }
+    .btn-primary:hover { 
+        opacity:0.9; 
+    }
+    .btn-outline:hover { 
+        background:#6366f1; 
+        color:#fff; 
+    }
 
-    form { background:#1e293b; margin-top:4px; padding:2rem; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1); max-width:600px; }
+    form { 
+        background:#1e293b; 
+        margin-top:4px; 
+        padding:2rem; 
+        border-radius:12px; 
+        box-shadow:0 4px 6px rgba(0,0,0,0.1); 
+        max-width:600px; 
+    }
     form label { display:block; margin:0.75rem 0 0.25rem; font-weight:600; }
     form input, form select, form textarea { width:100%; padding:0.75rem; border:1px solid #ccc; border-radius:8px; }
     form button { margin-top:1rem;}
@@ -135,12 +276,12 @@ $matchs = $pdo->query($sql)->fetchAll();
     <div class="stats-grid">
         <div class="stat-card">
             <i class="fas fa-ticket-alt"></i>
-            <h3>0</h3>
+            <h3><?= $nbBillets ?></h3>
             <p>Billets achetés</p>
         </div>
         <div class="stat-card">
             <i class="fas fa-calendar-check"></i>
-            <h3>0</h3>
+            <h3><?= $matchsAVenir ?></h3>
             <p>Matchs à venir</p>
         </div>
     </div>
@@ -157,20 +298,21 @@ $matchs = $pdo->query($sql)->fetchAll();
             </tr>
         </thead>
         <tbody>
+            <?php foreach ($matchs as $m): ?>
             <tr>
-                <td>FC Barca vs RM Madrid</td>
-                <td>12 Jan 2026</td>
-                <td>Stade Santiago</td>
-                <td>50</td>
-                <td><button class="btn btn-primary">Acheter</button></td>
+                <td><?= $m['equipe1'] ?> vs <?= $m['equipe2'] ?></td>
+                <td><?= $m['date_match'] ?></td>
+                <td><?= $m['lieu'] ?></td>
+                <td><?= $m['nb_places'] ?></td>
+                <td>
+                    <form method="post">
+                        <input type="hidden" name="id_match" value="<?= $m['id_match'] ?>">
+                        <button name="acheter" class="btn btn-primary">Acheter</button>
+                    </form>
+                </td>
             </tr>
-            <tr>
-                <td>PSG vs OM</td>
-                <td>15 Jan 2026</td>
-                <td>Parc des Princes</td>
-                <td>30</td>
-                <td><button class="btn btn-primary">Acheter</button></td>
-            </tr>
+            <?php endforeach; ?>
+
         </tbody>
     </table>
 
@@ -186,31 +328,40 @@ $matchs = $pdo->query($sql)->fetchAll();
             </tr>
         </thead>
         <tbody>
+            <?php foreach ($billets as $b): ?>
             <tr>
-                <td>FC Barca vs RM Madrid</td>
-                <td>12 Jan 2026</td>
-                <td>VIP</td>
-                <td>A12</td>
-                <td><button class="btn btn-outline">Télécharger</button></td>
+                <td><?= $b['equipe1'] ?> vs <?= $b['equipe2'] ?></td>
+                <td><?= $b['date_match'] ?></td>
+                <td><?= $b['nom_categorie'] ?></td>
+                <td><?= $b['place'] ?></td>
+                <td><button class="btn btn-outline">PDF</button></td>
             </tr>
+            <?php endforeach; ?>
         </tbody>
     </table>
 
     <h2>Laisser un avis</h2>
-    <form>
+    <form method="post">
         <label>Match :</label>
-        <select>
-            <option>FC Barca vs RM Madrid</option>
+        <select name="id_match">
+            <?php foreach ($matchsAvis as $m): ?>
+            <option value="<?= $m['id_match'] ?>">
+            <?= $m['equipe1'] ?> vs <?= $m['equipe2'] ?>
+            </option>
+            <?php endforeach; ?>
         </select>
         <label>Note :</label>
-        <select>
-            <option>5 étoiles</option>
-            <option>4 étoiles</option>
+        <select name="note">
+            <option value="5">5</option>
+            <option value="4">4</option>
+            <option value="3">3</option>
         </select>
-        <label>Commentaire :</label>
-        <textarea rows="4"></textarea>
-        <button type="submit" class="btn btn-primary">Envoyer l'avis</button>
+
+        <label>Commentaire</label>
+        <textarea name="commentaire"></textarea>
+        <button name="commenter" class="btn btn-primary">Envoyer</button>
     </form>
+
 </div>
 
 </body>

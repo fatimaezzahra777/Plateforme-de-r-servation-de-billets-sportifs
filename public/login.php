@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['nom']     = $user['nom'];
             $_SESSION['role']    = $user['role'];
 
-            // Redirection selon rôle
+            
             if ($user['role'] === 'admin') {
                 header('Location: ../admin/admin_dashboard.php');
             } elseif ($user['role'] === 'organisateur') {
@@ -572,7 +572,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- LOGIN FORM -->
             <div class="tab-content active" id="login">
-                <form class="form-content" method="POST">
+                <form class="form-content" method="POST" action="login.php">
                     <div class="alert" id="login-alert">
                         <i class="fas fa-exclamation-circle"></i> Identifiants incorrects
                     </div>
@@ -623,7 +623,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- REGISTER FORM -->
             <div class="tab-content" id="register">
-                <form class="form-content" id="register-form">
+                <form class="form-content" id="register-form" action="register.php" method="POST">
                     <div class="alert" id="register-alert">
                         <i class="fas fa-exclamation-circle"></i> Veuillez remplir tous les champs
                     </div>
@@ -724,110 +724,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <script>
-        // Tab Switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.dataset.tab;
-                
-                // Update buttons
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Update content
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(tab).classList.add('active');
-            });
-        });
-
-    
-
-        // Password Toggle
-        function togglePassword(inputId) {
-            const input = document.getElementById(inputId);
-            const icon = input.parentElement.querySelector('.password-toggle i');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        // Form Validation (Demo)
-        document.getElementById('login-form').addEventListener('submit', function(e){
-        e.preventDefault();
-
-        const formData = new FormData(this);
-
-        fetch('login.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            const alert = document.getElementById('login-alert');
-            alert.innerText = data.message;
-            alert.classList.add('show');
-
-            setTimeout(() => alert.classList.remove('show'), 3000);
-
-            if (data.success) {
-                window.location.href = 'dashboard.php';
-            }
+   <script>
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
         });
     });
 
-        // Role Selection
-        document.querySelectorAll('.role-card').forEach(card => {
-            card.addEventListener('click', () => {
-                document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
+    // Password toggle
+    function togglePassword(id){
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
 
-                // Update hidden input
-                document.getElementById('role').value = card.dataset.role;
-            });
-        });
-
-
-        document.getElementById('register-form').addEventListener('submit', function(e){
-        e.preventDefault();
-        const password = document.getElementById('register-password').value;
-        const confirm = document.getElementById('confirm-password').value;
-        const terms = document.getElementById('terms').checked;
-
-        if(password!==confirm){
-            const alert = document.getElementById('register-alert');
-            alert.innerText="Les mots de passe ne correspondent pas";
-            alert.classList.add('show');
-            setTimeout(()=>alert.classList.remove('show'),3000);
-            return;
-        }
-        if(!terms){
-            const alert = document.getElementById('register-alert');
-            alert.innerText="Vous devez accepter les CGU";
-            alert.classList.add('show');
-            setTimeout(()=>alert.classList.remove('show'),3000);
-            return;
-        }
-
-        const formData = new FormData(this);
-        fetch('register.php',{method:'POST',body:formData})
-        .then(res=>res.json())
-        .then(data=>{
-            const alert = document.getElementById('register-alert');
-            alert.innerText = data.message;
-            alert.classList.add('show');
-            setTimeout(()=>alert.classList.remove('show'),3000);
-            if(data.success) window.location.href='login.php';
+    // Role selection
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            document.getElementById('role').value = card.dataset.role;
         });
     });
-    </script>
+
+    // Confirm password (client side)
+    document.getElementById('register-form').addEventListener('submit', function(e){
+        const p1 = document.getElementById('register-password').value;
+        const p2 = document.getElementById('confirm-password').value;
+        if(p1 !== p2){
+            alert("Les mots de passe ne correspondent pas");
+            e.preventDefault();
+        }
+    });
+</script>
+
 </body>
 </html>

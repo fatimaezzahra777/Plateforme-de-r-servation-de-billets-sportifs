@@ -3,7 +3,7 @@ require_once 'User.php';
 
 class Acheteur extends User {
 
-    private $role = 'acheteur';
+    protected $role = 'acheteur';
 
     public function register() {
         $check = $this->conn->prepare(

@@ -6,10 +6,19 @@ abstract class User {
     protected $telephone;
     protected $email;
     protected $password;
+    protected $role;
     protected $conn;
 
     public function __construct($db) {
         $this->conn = $db;
+    }
+
+    public function getId() {
+    return $this->id;
+    }
+
+    public function getRole(){
+        return $this->role;
     }
 
     public function setName($name) {
@@ -31,6 +40,7 @@ abstract class User {
     public function setPassword($password) {
         $this->password = password_hash($password, PASSWORD_BCRYPT);
     }
+
 
     abstract public function register();
 

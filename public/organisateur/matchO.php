@@ -10,27 +10,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $pdo = Database::getConnection();
 
+    $logo1 = null;
+    $logo2 = null;
+
+    if (!empty($_FILES['logo_equipe1']['name'])) {
+        $logo1 = uniqid() . '_' . $_FILES['logo_equipe1']['name'];
+        move_uploaded_file($_FILES['logo_equipe1']['tmp_name'], "../assets/images/" . $logo1);
+    }
+
+    if (!empty($_FILES['logo_equipe2']['name'])) {
+        $logo2 = uniqid() . '_' . $_FILES['logo_equipe2']['name'];
+        move_uploaded_file($_FILES['logo_equipe2']['tmp_name'], "../assets/images/" . $logo2);
+    }
+
+
     $stmt = $pdo->prepare("
         INSERT INTO matchs 
         (id_organisateur, equipe1, logo_equipe1, equipe2, logo_equipe2, date_match, heure_match, lieu, nb_places)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmt->execute([
         $_SESSION['id_user'],
         $_POST['equipe1'],
-        $_POST['logo_equipe1'],
+        $logo1,
         $_POST['equipe2'],
-        $_POST['logo_equipe2'],
+        $logo2,
         $_POST['date'],
         $_POST['heure'],
         $_POST['lieu'],
         $_POST['nb_places']
     ]);
 
-    header("Location: dashboard-organisateur.php?success=1");
+    header("Location: organisateur.php?success=1");
     exit;
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -86,7 +101,7 @@ button{
 <div class="container">
 <h1>➕ Nouvelle demande de match</h1>
 
-<form method="POST" action="matchO.php">
+<form method="POST" action="matchO.php" enctype="multipart/form-data">
 <label>Équipe 1</label>
 <input type="text" name="equipe1" placeholder="Nom équipe 1">
 
@@ -112,14 +127,14 @@ button{
 <input type="number" name="nb_places" max="2000">
 
 <label>Catégorie</label>
-<select>
-    <option>VIP</option>
-    <option>Premium</option>
-    <option>Standard</option>
+<select name="categorie">
+    <option value="VIP">VIP</option>
+    <option value="Premium">Premium</option>
+    <option value="Standard">Standard</option>
 </select>
 
 <label>Prix (DH)</label>
-<input type="number">
+<input type="number" name="prix">
 
 <button type="submit">Envoyer pour validation</button>
 </form>

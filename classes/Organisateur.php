@@ -2,7 +2,7 @@
 require_once 'User.php';
 
 class Organisateur extends User {
-    private $role = 'organisateur';
+    protected $role = 'organisateur';
 
     public function register() {
         $check = $this->conn->prepare("SELECT id_user FROM users WHERE email = :email");

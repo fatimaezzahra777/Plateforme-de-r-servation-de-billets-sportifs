@@ -2,7 +2,7 @@
 require_once 'User.php';
 
 class Admin extends User {
-    private $role = 'admin';
+    protected $role = 'admin';
 
     public function register() {
         $check = $this->conn->prepare(

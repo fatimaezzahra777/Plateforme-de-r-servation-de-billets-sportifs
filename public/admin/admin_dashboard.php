@@ -2,9 +2,6 @@
 session_start();
 require_once '../../config/Database.php';
 
-/* =======================
-   SÉCURITÉ
-======================= */
 if (!isset($_SESSION['id_user']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../login.php');
     exit;
@@ -12,12 +9,8 @@ if (!isset($_SESSION['id_user']) || $_SESSION['role'] !== 'admin') {
 
 $pdo = Database::getConnection();
 
-/* =======================
-   ACTIONS MATCHS
-======================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Approuver match
     if (isset($_POST['approve_match'])) {
         $idMatch = (int) $_POST['approve_match'];
 
@@ -28,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Refuser match
     if (isset($_POST['reject_match'])) {
         $idMatch = (int) $_POST['reject_match'];
 
@@ -39,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
-
 
 if (isset($_GET['toggle_user'])) {
     $idUser = (int) $_GET['toggle_user'];
@@ -55,9 +46,7 @@ if (isset($_GET['toggle_user'])) {
     exit;
 }
 
-/* =======================
-   STATISTIQUES
-======================= */
+
 $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 
 $Matches = $pdo->query("
@@ -72,9 +61,7 @@ $revenue = $pdo->query("
     SELECT IFNULL(SUM(prix * nb_places),0) FROM categories
 ")->fetchColumn();
 
-/* =======================
-   UTILISATEURS RÉCENTS
-======================= */
+
 $recentUsers = $pdo->query("
     SELECT id_user, nom, email, role, statut
     FROM users
@@ -82,9 +69,7 @@ $recentUsers = $pdo->query("
     LIMIT 5
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-/* =======================
-   MATCHS EN ATTENTE
-======================= */
+
 $pendingMatches = $pdo->query("
     SELECT m.*, u.nom AS organisateur
     FROM matchs m
