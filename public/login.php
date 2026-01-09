@@ -545,7 +545,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <nav class="navbar">
             <div class="logo">🎫 SportTicket</div>
             <ul class="nav-links">
-                <li><a href="inndex.php">Accueil</a></li>
+                <li><a href="index.php">Accueil</a></li>
                 <li><a href="propos.php">À propos</a></li>
             </ul>
             <div class="auth-buttons">

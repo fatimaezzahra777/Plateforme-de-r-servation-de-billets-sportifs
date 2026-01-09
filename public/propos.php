@@ -646,11 +646,10 @@
         <nav class="navbar">
             <div class="logo">🎫 SportTicket</div>
             <ul class="nav-links">
-                <li><a href="#home">Accueil</a></li>
-                <li><a href="#about">À propos</a></li>
+                <li><a href="index.php">Accueil</a></li>
+                <li><a href="propos.php">À propos</a></li>
                 <li><a href="contact.php">Contact</a></li>
             </ul>
-            <a href="#" class="btn btn-primary">Mon compte</a>
         </nav>
     </header>
 

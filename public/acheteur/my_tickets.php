@@ -152,7 +152,7 @@ $billets = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?= $b['heure_match'] ?></td>
                     <td><?= htmlspecialchars($b['nom_categorie']) ?></td>
                     <td><?= htmlspecialchars($b['place']) ?></td>
-                    <td><button class="btn btn-outline">Télécharger</button></td>
+                    <td><a href="pdf.php?id_ticket=<?= $b['id_ticket'] ?>" class="btn btn-outline">Télécharger</a></td>
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
