@@ -1,6 +1,7 @@
 {
     "require": {
         "setasign/fpdf": "^1.8",
-        "endroid/qr-code": "^6.0"
+        "endroid/qr-code": "^6.0",
+        "phpmailer/phpmailer": "^7.0"
     }
 }

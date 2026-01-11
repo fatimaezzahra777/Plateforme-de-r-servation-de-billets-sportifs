@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($user['role'] === 'organisateur') {
                 header('Location: ../organisateur/organisateur.php');
             } elseif ($user['role'] === 'acheteur') {
-                header('Location: ../acheteur/acheteur_d.php');
+                header('Location: ../acheteur/matches.php');
             }else {
                 header('Location: login.php');
             }
